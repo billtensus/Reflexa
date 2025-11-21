@@ -44,15 +44,18 @@ RUN python -m pip install --upgrade pip setuptools wheel \
     && python -m pip install --no-cache-dir -r /app/requirements.txt
     # CRITICAL CHANGE: Remove all build-only dependencies after Python packages are compiled and installed.
     # This significantly reduces the final image size and attack surface (best practice for production).
-RUN apt-get purge -y --autoremove \
-    build-essential cmake pkg-config git \
+RUN apt-get update && apt-get purge -y --auto-remove \
+    build-essential \
+    cmake \
+    pkg-config \
+    git \
+    python3-dev \                # ← almost always needed for C extensions
     libavcodec-dev libavformat-dev libavdevice-dev libavutil-dev libswscale-dev \
     libavfilter-dev libswresample-dev libsrtp2-dev libopus-dev libvpx-dev \
     libx264-dev libx265-dev libxvidcore-dev libssl-dev libffi-dev \
     libjpeg-dev zlib1g-dev libpng-dev \
-    apt-get clean \
-    rm -rf /var/lib/apt/lists/*
-
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 COPY . /app
 
 EXPOSE 8080
@@ -62,6 +65,7 @@ ENV STREAMLIT_SERVER_PORT=8080
 ENV STREAMLIT_SERVER_HEADLESS=true
 
 ENTRYPOINT ["streamlit", "run", "Demo.py"]
+
 
 
 
