@@ -1,5 +1,5 @@
 # Core UI and streaming
-streamlit>=1.20,<2.0
+streamlit>=1.30,<2.0
 streamlit-webrtc>=0.50,<1.0
 
 # Media / WebRTC / video processing
@@ -9,7 +9,7 @@ aiortc>=1.6.0
 
 opencv-python-headless>=4.7.0
 numpy>=1.23
-Pillow>=9.0
+Pillow>=10.0
 
 # TensorFlow Lite:
 # Option A (smaller): tflite-runtime manylinux wheel (ensure wheel matches target platform)
