@@ -1,0 +1,13 @@
+streamlit==1.28.1
+streamlit-webrtc==0.47.1
+opencv-python-headless==4.8.1.78
+mediapipe==0.10.9
+numpy==1.24.3
+Pillow==10.0.1
+aiortc==1.9.0
+av>=12.0.0,<13.0.0
+pylibsrtp==0.10.0
+cffi==1.15.1
+cryptography==42.0.0
+websockets==11.0.3
+aiohttp==3.8.6
