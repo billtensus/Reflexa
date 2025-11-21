@@ -5,7 +5,8 @@ import av
 import cv2
 import numpy as np
 import streamlit as st
-from streamlit_webrtc import VideoProcessorBase, webrtc_streamer
+# Import RTCConfiguration along with VideoProcessorBase and webrtc_streamer
+from streamlit_webrtc import VideoProcessorBase, webrtc_streamer, RTCConfiguration 
 
 # Basic logger for Cloud Run logs
 logger = logging.getLogger("reflexa")
@@ -108,12 +109,23 @@ class VideoProcessor(VideoProcessorBase):
             # Return original frame on error to keep the pipeline alive
             return frame
 
-# RTC configuration (STUN). Add TURN servers if your network requires them.
-rtc_configuration = {
-    "iceServers": [
-        {"urls": ["stun:stun.l.google.com:19302"]}
+# --- CORRECTED RTC CONFIGURATION ---
+# We are now using RTCConfiguration class for better type safety and including 
+# multiple public STUN servers to increase the chance of successful connection.
+rtc_configuration = RTCConfiguration(
+    iceServers=[
+        {"urls": ["stun:stun.l.google.com:19302"]},
+        {"urls": ["stun:stun1.l.google.com:19302"]},
+        {"urls": ["stun:stun2.l.google.com:19302"]},
+        {"urls": ["stun:stun3.l.google.com:19302"]},
+        {"urls": ["stun:stun4.l.google.com:19302"]},
+        # Add a public Twilio STUN server as an alternative fallback
+        {"urls": ["stun:global.stun.twilio.com:3478"]},
+        # If necessary, a TURN server with credentials would go here:
+        # {"urls": ["turn:your-turn-server.com:3478"], "username": "user", "credential": "password"},
     ]
-}
+)
+# -----------------------------------
 
 # Request video only (no audio)
 media_stream_constraints = {"video": True, "audio": False}
