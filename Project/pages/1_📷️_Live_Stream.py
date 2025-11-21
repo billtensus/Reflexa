@@ -119,10 +119,15 @@ rtc_configuration = RTCConfiguration(
         {"urls": ["stun:stun2.l.google.com:19302"]},
         {"urls": ["stun:stun3.l.google.com:19302"]},
         {"urls": ["stun:stun4.l.google.com:19302"]},
+        {"urls": ["stun:stun1.l.google.com:3478"]},
+        {"urls": ["stun:stun1.l.google.com:5349"]},
+        {"urls": ["stun:stun2.l.google.com:5349"]},
+        {"urls": ["stun:stun3.l.google.com:3478"]},
+        {"urls": ["stun:stun3.l.google.com:5349"]},
         # Add a public Twilio STUN server as an alternative fallback
         {"urls": ["stun:global.stun.twilio.com:3478"]},
         # If necessary, a TURN server with credentials would go here:
-        # {"urls": ["turn:your-turn-server.com:3478"], "username": "user", "credential": "password"},
+        {"urls": ["turn:relay1.expressturn.com:3480"], "username": "000000002079128151", "credential": "JBKtuvPGM+lrWxz4vUCblI5wBrs="},
     ]
 )
 # -----------------------------------
