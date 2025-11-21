@@ -48,5 +48,9 @@ COPY . /app
 EXPOSE 8080
 
 # Use bash -c so runtime $PORT is respected; run your demo.py (adjust path if needed)
-CMD ["streamlit", "run", "app/demo.py", "--server.port", "$PORT", "--server.address", "0.0.0.0"]
+ENV STREAMLIT_SERVER_PORT=8080
+ENV STREAMLIT_SERVER_HEADLESS=true
+
+ENTRYPOINT ["streamlit", "run", "Demo.py"]
+
 
