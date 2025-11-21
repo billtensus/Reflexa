@@ -48,4 +48,5 @@ COPY . /app
 EXPOSE 8080
 
 # Use bash -c so runtime $PORT is respected; run your demo.py (adjust path if needed)
-CMD ["bash", "-c", "streamlit run app/demo.py --server.port=${PORT:-8080} --server.address=0.0.0.0 --server.headless=true --server.enableCORS=false"]
+CMD ["streamlit", "run", "app/demo.py", "--server.port", "$PORT", "--server.address", "0.0.0.0"]
+
