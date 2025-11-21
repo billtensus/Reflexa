@@ -1,17 +1,14 @@
-# Multi-stage Dockerfile to build Python packages (including wheels) in a builder stage
-# and produce a smaller runtime image with only runtime system libs + installed packages.
-# Adjust apt package names if you use a different base image.
-
+# Multi-stage build using a fixed Debian release (bullseye) to avoid mismatched package names.
 ########################################
 # Builder stage: install build deps and Python packages
 ########################################
-FROM python:3.11-slim AS builder
+FROM python:3.11-bullseye-slim AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_NO_CACHE_DIR=1 \
     PYTHONUNBUFFERED=1
 
-# Install build-time system dependencies required to compile wheels for av/aiortc, etc.
+# Build-time dependencies (for compiling wheels for av/aiortc and friends)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     pkg-config \
@@ -40,24 +37,20 @@ RUN python -m pip install --upgrade pip setuptools wheel \
 ########################################
 # Final stage: smaller runtime image
 ########################################
-FROM python:3.11-slim
+FROM python:3.11-bullseye-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PORT=8080
 
-# Install only runtime system packages (smaller set; no build tools)
+# Install runtime packages. ffmpeg will pull the proper libav* runtime libs for bullseye.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     ca-certificates \
     libsrtp2-1 \
     libopus0 \
     libvpx6 \
-    libavcodec58 \
-    libavformat58 \
-    libavdevice58 \
-    libavutil56 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy installed Python packages from builder
