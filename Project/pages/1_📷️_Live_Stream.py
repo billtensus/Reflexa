@@ -1,127 +1,127 @@
-# live_stream.py
-import av
+import logging
 import os
-import sys
-import streamlit as st
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, ClientSettings
+
+import av
 import cv2
-import tempfile
+import numpy as np
+import streamlit as st
+from streamlit_webrtc import VideoProcessorBase, webrtc_streamer
 
-BASE_DIR = os.path.abspath(os.path.join(__file__, '../../'))
-sys.path.append(BASE_DIR)
+# Basic logger for Cloud Run logs
+logger = logging.getLogger("reflexa")
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    ch = logging.StreamHandler()
+    ch.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+    logger.addHandler(ch)
 
-from utils import get_mediapipe_pose
-from process_frame import ProcessFrame
-from thresholds import get_thresholds_beginner, get_thresholds_pro
+st.header("Live Stream (Reflexa)")
 
-st.title('AI Fitness Trainer: Squats Analysis (Live)')
+# Try to import tflite runtime or fallback to tensorflow.lite if available
+_tflite_interpreter = None
+try:
+    import tflite_runtime.interpreter as tflite  # type: ignore
+    _tflite_interpreter = tflite.Interpreter
+    logger.info("Using tflite_runtime.interpreter")
+except Exception:
+    try:
+        from tensorflow.lite import Interpreter as tflite  # type: ignore
+        _tflite_interpreter = tflite
+        logger.info("Using tensorflow.lite.Interpreter")
+    except Exception:
+        logger.info("No TFLite interpreter available; inference disabled")
 
-# Mode selection
-mode = st.radio('Select Mode', ['Beginner', 'Pro'], horizontal=True)
+# Optional: load a model if present at /app/model.tflite
+TFLITE_MODEL_PATH = "/app/model.tflite"
+interpreter = None
+if _tflite_interpreter and os.path.exists(TFLITE_MODEL_PATH):
+    try:
+        interpreter = _tflite_interpreter(model_path=TFLITE_MODEL_PATH)
+        interpreter.allocate_tensors()
+        logger.info("Loaded TFLite model from %s", TFLITE_MODEL_PATH)
+    except Exception as e:
+        logger.exception("Failed to load TFLite model: %s", e)
+        interpreter = None
+else:
+    if _tflite_interpreter:
+        logger.info("TFLite interpreter available but no model found at %s", TFLITE_MODEL_PATH)
 
-thresholds = get_thresholds_beginner() if mode == 'Beginner' else get_thresholds_pro()
-
-# Session state for download
-if 'download' not in st.session_state:
-    st.session_state['download'] = False
-
-output_video_file = "output_live.mp4"
-
-# Initialize pose
-pose = get_mediapipe_pose()
-
-# -----------------------------
-# OpenCV + VideoTransformer
-# -----------------------------
-class PoseTransformer(VideoTransformerBase):
+class VideoProcessor(VideoProcessorBase):
+    """
+    Example video processor that:
+    - logs frame throughput
+    - does simple processing (grayscale)
+    - demonstrates where to run TFLite inference if available
+    Implements recv(self, frame: av.VideoFrame) -> av.VideoFrame
+    """
     def __init__(self):
-        self.process_frame = ProcessFrame(thresholds=thresholds, flip_frame=True)
-        self.pose = pose
-        self.recording = False
-        self.out = None
+        self.frame_count = 0
 
-    def start_recording(self):
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        self.out = cv2.VideoWriter(output_video_file, fourcc, 20.0, (640, 480))
-        self.recording = True
+    def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
+        try:
+            self.frame_count += 1
+            img = frame.to_ndarray(format="bgr24")
 
-    def stop_recording(self):
-        if self.out:
-            self.out.release()
-            self.out = None
-        self.recording = False
+            # Simple processing: grayscale -> back to BGR
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            processed = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
 
-    def transform(self, frame):
-        img = frame.to_ndarray(format="bgr24")
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        out_img, _ = self.process_frame.process(img, self.pose)
-        out_bgr = cv2.cvtColor(out_img, cv2.COLOR_RGB2BGR)
+            # Placeholder for TFLite inference block (customize for your model)
+            if interpreter is not None:
+                try:
+                    input_details = interpreter.get_input_details()
+                    output_details = interpreter.get_output_details()
 
-        # Record if active
-        if self.recording and self.out:
-            resized = cv2.resize(out_bgr, (640, 480))
-            self.out.write(resized)
+                    # Example assumptions — adapt to your model's input shape/format
+                    inp_shape = input_details[0]["shape"]
+                    # Typical shape: [1, h, w, c] or [1, h, w]
+                    if len(inp_shape) >= 3:
+                        inp_h, inp_w = inp_shape[1], inp_shape[2]
+                        resized = cv2.resize(processed, (inp_w, inp_h))
+                        # Normalize if needed (adjust per your model)
+                        input_data = np.expand_dims(resized.astype(np.float32) / 255.0, axis=0)
+                        # Match dtype if required
+                        if input_details[0]["dtype"].name == "uint8":
+                            input_data = (input_data * 255).astype(np.uint8)
 
-        return out_bgr
+                        interpreter.set_tensor(input_details[0]["index"], input_data)
+                        interpreter.invoke()
+                        preds = interpreter.get_tensor(output_details[0]["index"])
+                        # Overlay inference result placeholder
+                        cv2.putText(processed, "TFLite OK", (10, 60),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                except Exception:
+                    logger.exception("TFLite inference error; continuing without inference")
 
+            # Overlay frame count to verify processing visually
+            cv2.putText(processed, f"Frames: {self.frame_count}", (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
 
-# -----------------------------
-# WebRTC Streamer
-# -----------------------------
-transformer = PoseTransformer()
+            # Convert back to av.VideoFrame and preserve timing metadata
+            new_frame = av.VideoFrame.from_ndarray(processed, format="bgr24")
+            new_frame.pts = frame.pts
+            new_frame.time_base = frame.time_base
+            return new_frame
 
-ctx = webrtc_streamer(
-    key="live-squat-analysis",
-    video_transformer_factory=PoseTransformer,
-    client_settings=ClientSettings(
-        rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
-        media_stream_constraints={
-            "video": {
-                "width": {"ideal": 640},
-                "height": {"ideal": 480},
-                "frameRate": {"ideal": 30}
-            },
-            "audio": False
-        },
-    ),
-    async_processing=False,
+        except Exception as e:
+            logger.exception("Error processing frame: %s", e)
+            # Return original frame on error to keep the pipeline alive
+            return frame
+
+# RTC configuration (STUN). Add TURN servers if your network requires them.
+rtc_configuration = {
+    "iceServers": [
+        {"urls": ["stun:stun.l.google.com:19302"]}
+    ]
+}
+
+# Request video only (no audio)
+media_stream_constraints = {"video": True, "audio": False}
+
+webrtc_streamer(
+    key="reflexa-live",
+    rtc_configuration=rtc_configuration,
+    media_stream_constraints=media_stream_constraints,
+    video_processor_factory=lambda: VideoProcessor(),
+    async_processing=True,
 )
-
-# -----------------------------
-# Recording Controls
-# -----------------------------
-col1, col2 = st.columns(2)
-
-with col1:
-    if st.button("Start Recording", disabled=ctx.video_transformer is None):
-        if ctx.video_transformer:
-            ctx.video_transformer.start_recording()
-            st.success("Recording started...")
-
-with col2:
-    if st.button("Stop Recording", disabled=ctx.video_transformer is None):
-        if ctx.video_transformer:
-            ctx.video_transformer.stop_recording()
-            st.success("Recording saved!")
-
-# -----------------------------
-# Download Button
-# -----------------------------
-download_button = st.empty()
-
-if os.path.exists(output_video_file):
-    with open(output_video_file, "rb") as f:
-        download = download_button.download_button(
-            label="Download Recorded Video",
-            data=f,
-            file_name="squat_analysis_live.mp4",
-            mime="video/mp4"
-        )
-    if download:
-        st.session_state['download'] = True
-
-if st.session_state.get('download', False) and os.path.exists(output_video_file):
-    os.remove(output_video_file)
-    st.session_state['download'] = False
-    download_button.empty()
-    st.rerun()
