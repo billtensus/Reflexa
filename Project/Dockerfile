@@ -42,9 +42,7 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 RUN python -m pip install --upgrade pip setuptools wheel \
     && python -m pip install --no-cache-dir -r /app/requirements.txt
-
-COPY . /app
-# CRITICAL CHANGE: Remove all build-only dependencies after Python packages are compiled and installed.
+    # CRITICAL CHANGE: Remove all build-only dependencies after Python packages are compiled and installed.
     # This significantly reduces the final image size and attack surface (best practice for production).
     && apt-get purge -y --autoremove \
         build-essential cmake pkg-config git \
@@ -55,6 +53,8 @@ COPY . /app
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+COPY . /app
+
 EXPOSE 8080
 
 # Use bash -c so runtime $PORT is respected; run your demo.py (adjust path if needed)
@@ -62,6 +62,7 @@ ENV STREAMLIT_SERVER_PORT=8080
 ENV STREAMLIT_SERVER_HEADLESS=true
 
 ENTRYPOINT ["streamlit", "run", "Demo.py"]
+
 
 
 
