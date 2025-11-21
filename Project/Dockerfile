@@ -49,7 +49,7 @@ RUN apt-get update && apt-get purge -y --auto-remove \
     cmake \
     pkg-config \
     git \
-    python3-dev \                # ← almost always needed for C extensions
+    python3-dev \
     libavcodec-dev libavformat-dev libavdevice-dev libavutil-dev libswscale-dev \
     libavfilter-dev libswresample-dev libsrtp2-dev libopus-dev libvpx-dev \
     libx264-dev libx265-dev libxvidcore-dev libssl-dev libffi-dev \
@@ -65,6 +65,7 @@ ENV STREAMLIT_SERVER_PORT=8080
 ENV STREAMLIT_SERVER_HEADLESS=true
 
 ENTRYPOINT ["streamlit", "run", "Demo.py"]
+
 
 
 
