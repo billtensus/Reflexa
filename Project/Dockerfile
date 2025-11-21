@@ -71,4 +71,5 @@ COPY . /app
 EXPOSE 8080
 
 # Default start command (Streamlit). Change entrypoint if your project uses a different launcher.
-CMD ["streamlit", "run", "app/pages/1_📷️_Live_Stream.py", "--server.port=8080", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "Demo.py"]
+
