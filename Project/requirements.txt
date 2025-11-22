@@ -10,6 +10,7 @@ aiortc>=1.6.0
 opencv-python-headless>=4.7.0
 numpy>=1.23
 Pillow>=10.0
+mediapipe>=0.10.0
 
 # TensorFlow Lite:
 # Option A (smaller): tflite-runtime manylinux wheel (ensure wheel matches target platform)
