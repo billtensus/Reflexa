@@ -130,28 +130,28 @@ rtc_configuration = RTCConfiguration(
         {"urls": ["turn:relay1.expressturn.com:3480"], "username": "000000002079128151", "credential": "JBKtuvPGM+lrWxz4vUCblI5wBrs="},
         #turn
         {
-        urls: "stun:stun.relay.metered.ca:80",
-      },
-      {
-        urls: "turn:asia.relay.metered.ca:80",
-        username: "706e30892f13a766e8ca9d04",
-        credential: "g+mbb7HpKhlJ5ukA",
-      },
-      {
-        urls: "turn:asia.relay.metered.ca:80?transport=tcp",
-        username: "706e30892f13a766e8ca9d04",
-        credential: "g+mbb7HpKhlJ5ukA",
-      },
-      {
-        urls: "turn:asia.relay.metered.ca:443",
-        username: "706e30892f13a766e8ca9d04",
-        credential: "g+mbb7HpKhlJ5ukA",
-      },
-      {
-        urls: "turns:asia.relay.metered.ca:443?transport=tcp",
-        username: "706e30892f13a766e8ca9d04",
-        credential: "g+mbb7HpKhlJ5ukA",
-      },
+            "urls": ["stun:stun.relay.metered.ca:80"],
+        },
+        {
+            "urls": ["turn:asia.relay.metered.ca:80"],
+            "username": "706e30892f13a766e8ca9d04",
+            "credential": "g+mbb7HpKhlJ5ukA",
+        },
+        {
+            "urls": ["turn:asia.relay.metered.ca:80?transport=tcp"],
+            "username": "706e30892f13a766e8ca9d04",
+            "credential": "g+mbb7HpKhlJ5ukA",
+        },
+        {
+            "urls": ["turn:asia.relay.metered.ca:443"],
+            "username": "706e30892f13a766e8ca9d04",
+            "credential": "g+mbb7HpKhlJ5ukA",
+        },
+        {
+            "urls": ["turns:asia.relay.metered.ca:443?transport=tcp"],
+            "username": "706e30892f13a766e8ca9d04",
+            "credential": "g+mbb7HpKhlJ5ukA",
+        },
     ]
 )
 # -----------------------------------
