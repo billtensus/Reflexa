@@ -19,7 +19,7 @@ mediapipe>=0.10.0
 # Uncomment the option you want:
 tflite-runtime==2.9.0
 # OR use full tensorflow (larger image):
-# tensorflow>=2.9.0
+# tensorflow>=2.14.0
 
 # Utilities
 pyyaml>=6.0
