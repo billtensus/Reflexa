@@ -17,9 +17,9 @@ mediapipe>=0.10.0
 # If you expect to run on Cloud Run x86_64 and have a compatible wheel you can enable this.
 # Many builds will instead use the full tensorflow package which is larger but more portable.
 # Uncomment the option you want:
-tflite-runtime==2.9.0
+tflite-runtime==2.14.0
 # OR use full tensorflow (larger image):
-# tensorflow>=2.14.0
+# tensorflow>=2.9.0
 
 # Utilities
 pyyaml>=6.0
